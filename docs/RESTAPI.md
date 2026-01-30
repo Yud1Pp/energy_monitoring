@@ -1,4 +1,3 @@
-````md
 # 📘 Dokumentasi REST API
 
 Energy Monitoring System – Ravelware  
@@ -15,7 +14,7 @@ Digunakan oleh **dashboard realtime (card panel lantai 1–3)**
 ```http
 GET /energy/realtime
 ```
-````
+
 
 ### Deskripsi
 
