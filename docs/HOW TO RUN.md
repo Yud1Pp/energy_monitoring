@@ -1,4 +1,3 @@
-````md
 # 📘 Panduan Konfigurasi & Menjalankan Sistem
 
 Energy Monitoring System – Ravelware
@@ -16,7 +15,6 @@ Sistem ini menggunakan **InfluxDB v2 (OSS atau Cloud)** sebagai database utama.
 ✔ Perbedaan hanya pada nilai URL dan Token
 ✔ Kode backend tidak perlu diubah
 ```
-````
 
 ### Langkah Umum
 
