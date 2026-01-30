@@ -240,8 +240,3 @@ src/
 ✔ Response siap langsung dipakai UI
 
 ==================================================
-
-```
-
-Tinggal bilang 👉 lanjut yang mana 🔥
-```
