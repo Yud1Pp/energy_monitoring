@@ -1,163 +1,29 @@
-
-## 5️⃣ Arsitektur Backend (MVC – Disesuaikan Implementasi)
-
-Backend menggunakan pola **MVC ringan** dengan pemisahan tanggung jawab yang jelas.
-Model pada sistem ini **bukan ORM / database access**, melainkan **template data response**.
+# 📘 Dokumentasi Arsitektur Sistem  
+Energy Monitoring System – Ravelware
 
 ==================================================
 
-### Struktur Folder
+## 1️⃣ Tujuan Arsitektur Sistem
 
-```text
-src/
-├── config/        → konfigurasi environment, MQTT, InfluxDB
-├── mqtt/          → MQTT subscriber & topic handler
-├── models/        → data template / response mapper
-├── services/      → business logic + query InfluxDB
-├── controllers/   → REST API handler
-├── routes/        → endpoint routing
-└── simulators/    → MQTT publisher (sensor simulator)
-```
+Arsitektur sistem **Energy Monitoring** dirancang untuk:
+- Menerima data sensor listrik secara realtime
+- Menyimpan data time-series secara efisien
+- Mengolah data menjadi informasi monitoring & billing
+- Menyediakan REST API yang siap digunakan Web Dashboard
 
-==================================================
-
-## 6️⃣ Penjelasan Layer Secara Detail
-
-### 6.1 Config Layer
-
-```text
-Tanggung jawab:
-- Load environment variables (.env)
-- Inisialisasi koneksi MQTT
-- Inisialisasi InfluxDB client
-```
-
-File utama:
-
-```text
-config/influx.config.js
-config/mqtt.config.js
-config/env.config.js
-```
+Sistem mengutamakan:
+✔ Realtime
+✔ Scalability
+✔ Separation of Concerns
+✔ Backend-driven logic
 
 ==================================================
 
-### 6.2 MQTT Layer
+## 2️⃣ Gambaran Umum Arsitektur
 
-```text
-Tanggung jawab:
-- Subscribe ke topic MQTT
-- Menerima payload sensor
-- Mapping topic → panel_id
-- Meneruskan data ke service
-```
+Sistem menggunakan pendekatan **event-driven ingestion** dan **RESTful service**.
 
-Komponen:
-
-```text
-mqttClient.js
-mqttSubscriber.js
-topicMapper.js
-```
-
-==================================================
-
-### 6.3 Model Layer (Template / Data Contract)
-
-⚠️ **Model TIDAK melakukan akses database**
-
-Model hanya berfungsi sebagai:
-
-```text
-- Data template
-- Response formatter
-- Kontrak data API (API contract)
-```
-
-Contoh implementasi:
-
-```js
-const RealtimeEnergyModel = (data = {}) => ({
-  panel_id: data.panel_id ?? null,
-  voltage: data.voltage ?? null,
-  current: data.current ?? null,
-  power_kw: data.power_kw ?? null,
-  energy_kwh: data.energy_kwh ?? null,
-  pf: data.pf ?? null,
-  v_unbal: data.v_unbal ?? null,
-  i_unbal: data.i_unbal ?? null,
-  status: data.status ?? "OFFLINE",
-  cost_rp: data.cost_rp ?? 0,
-  timestamp: data.timestamp ?? null,
-});
-```
-
-Fungsi model:
-
-```text
-✔ Menjaga konsistensi response API
-✔ Menghindari logic di controller
-✔ Memudahkan perubahan struktur data
-```
-
-==================================================
-
-### 6.4 Service Layer (Core Logic)
-
-Service layer adalah **pusat logika sistem**.
-
-Tanggung jawab:
-
-```text
-- Query data ke InfluxDB (Flux)
-- Menghitung status panel
-- Menghitung today usage
-- Menghitung cost
-- Agregasi monthly & yearly
-```
-
-Contoh service:
-
-```text
-energy.service.js
-status.service.js
-cost.service.js
-summary.service.js
-```
-
-Alur:
-
-```text
-Controller → Service → InfluxDB → Service → Model → Controller
-```
-
-==================================================
-
-### 6.5 Controller Layer
-
-```text
-Tanggung jawab:
-- Menerima HTTP request
-- Validasi parameter
-- Memanggil service layer
-- Mengembalikan response JSON
-```
-
-Controller **tidak berisi logic bisnis**.
-
-==================================================
-
-### 6.6 Routes Layer
-
-```text
-Tanggung jawab:
-- Mapping URL → Controller
-- Menjaga struktur endpoint API
-```
-
-==================================================
-
-## 7️⃣ Alur Data (Final & Akurat)
+### Alur Utama Sistem
 
 ```text
 Sensor
@@ -168,9 +34,7 @@ MQTT Subscriber
   ↓
 InfluxDB
   ↓
-Service Layer (query + logic)
-  ↓
-Model (response template)
+Backend Service
   ↓
 REST API
   ↓
@@ -179,30 +43,205 @@ Web Dashboard
 
 ==================================================
 
-## 8️⃣ Kenapa Model Dibuat Sebagai Template?
+## 3️⃣ Teknologi yang Digunakan
+Sensor / Simulator : MQTT Publisher
+Protocol           : MQTT
+Message Broker     : test.mosquitto.org
+Backend Runtime    : Node.js
+Web Framework      : Express.js
+Database           : InfluxDB OSS v2
+Architecture       : Layered MVC
+Data Format        : JSON
+
+==================================================
+
+## 4️⃣ Diagram Arsitektur Sistem (Logical View)
 
 ```text
-✔ Lebih ringan (tanpa ORM)
-✔ Cocok untuk time-series database
-✔ Response API konsisten
-✔ Mudah dites
-✔ Clean architecture
++-------------------+
+|  Sensor / Panel   |
+|  (Power Meter)    |
++---------+---------+
+          |
+          | MQTT Publish (±1 menit)
+          v
++-------------------+
+|   MQTT Broker     |
+| test.mosquitto.org|
++---------+---------+
+          |
+          | MQTT Subscribe
+          v
++-------------------+
+| MQTT Subscriber   |
+| (Node.js Module)  |
++---------+---------+
+          |
+          | Write Raw Data
+          v
++-------------------+
+|    InfluxDB       |
+| energy_monitoring |
++---------+---------+
+          |
+          | Flux Query
+          v
++-------------------------------+
+|   Backend Service Layer       |
+| (Business Logic & Aggregator) |
++---------+---------------------+
+          |
+          | REST API (JSON)
+          v
++-------------------+
+|  Web Dashboard    |
+| (Frontend Team)   |
++-------------------+
 ```
 
 ==================================================
 
-## 9️⃣ Kesimpulan
+## 5️⃣ Alur Data Sistem (Step-by-Step)
+
+### 5.1 Sensor → MQTT Broker
+- Sensor mengirim data setiap ±1 menit
+- Protocol MQTT
+- Topic:
+  DATA/PM/PANEL_LANTAI_1
+  DATA/PM/PANEL_LANTAI_2
+  DATA/PM/PANEL_LANTAI_3
+
+---
+
+### 5.2 MQTT Broker → MQTT Subscriber
+- MQTT Subscriber subscribe ke DATA/PM/#
+- Broker meneruskan pesan ke subscriber
+- Topic dipetakan menjadi panel_id
+
+---
+
+### 5.3 MQTT Subscriber → InfluxDB
+
+- Payload divalidasi
+- Data disimpan sebagai raw time-series
+- Tidak ada data agregasi yang disimpan
+
+Database design:
 
 ```text
-Model → hanya template data
-Service → akses InfluxDB & logic
-Controller → HTTP handler
-```
-
-Desain ini sesuai dengan kebutuhan sistem monitoring realtime
-dan best practice backend modern.
-
+Bucket      : energy_monitoring
+Measurement : panel_energy
 ```
 
 ---
+
+### 5.4 InfluxDB → Backend Service
+- Backend Service melakukan query Flux
+- Mengambil data terbaru & historis
+- Melakukan perhitungan logika bisnis
+
+Logika bisnis:
+- Status panel (ONLINE / OFFLINE)
+- Today usage (kWh)
+- Cost (Rp)
+- Monthly summary
+
+---
+
+### 5.5 Backend Service → REST API
+- Controller menerima request HTTP
+- Memanggil service layer
+- Service mengembalikan data terstruktur
+
+---
+
+### 5.6 REST API → Web Dashboard
+- Frontend hanya konsumsi data
+- Tidak ada perhitungan di frontend
+- Data langsung sesuai mockup
+
+==================================================
+
+## 6️⃣ Arsitektur Backend (Layered MVC)
+
+```text
+src/
+├── config/        → environment, MQTT, InfluxDB
+├── mqtt/          → subscriber & topic handler
+├── models/        → data template / response contract
+├── services/      → business logic & query DB
+├── controllers/   → HTTP request handler
+├── routes/        → endpoint mapping
+└── simulators/    → sensor simulator
+```
+
+==================================================
+
+## 7️⃣ Penjelasan Setiap Layer
+
+### Config
+
+```text
+- Menyimpan konfigurasi global
+- Menggunakan environment variable (.env)
+```
+
+### MQTT
+
+```text
+- Menangani komunikasi MQTT
+- Fokus hanya pada ingestion data
+```
+
+### Model
+
+```text
+- Bukan ORM / DB access
+- Template response API
+- Menjaga konsistensi struktur data
+```
+
+### Service
+
+```text
+- Query InfluxDB
+- Seluruh business logic berada di sini
+```
+
+### Controller
+
+```text
+- Handle request & response
+- Tanpa logic bisnis
+```
+
+### Routes
+
+```text
+- Mapping URL ke controller
+```
+
+==================================================
+
+## 8️⃣ Prinsip Desain Arsitektur
+✔ Event-driven ingestion
+✔ Single source of truth (InfluxDB)
+✔ Clean separation of concerns
+✔ Scalable (mudah tambah panel)
+✔ Mockup-ready API
+
+==================================================
+
+## 9️⃣ Kesesuaian dengan Mockup Dashboard
+✔ Realtime monitoring
+✔ Status panel ONLINE / OFFLINE
+✔ Today usage & cost
+✔ Grafik bulanan
+✔ Response siap langsung dipakai UI
+
+==================================================
+
+```
+
+Tinggal bilang 👉 lanjut yang mana 🔥
 ```
