@@ -1,13 +1,4 @@
-Siap 👍 ini kita **rapikan & luruskan dokumentasi arsitekturnya** supaya **sesuai dengan implementasi kamu** dan **secara teknis benar** (ini penting banget buat reviewer).
 
-Intinya: **Model BUKAN akses database**, tapi **template / response mapper**.
-Akses InfluxDB ada di **service layer**.
-
-Di bawah ini **bagian dokumentasi yang sudah diperbaiki**, tinggal **copy–paste** menggantikan bagian terkait di dokumen arsitektur.
-
----
-
-````md
 ## 5️⃣ Arsitektur Backend (MVC – Disesuaikan Implementasi)
 
 Backend menggunakan pola **MVC ringan** dengan pemisahan tanggung jawab yang jelas.
@@ -27,7 +18,6 @@ src/
 ├── routes/        → endpoint routing
 └── simulators/    → MQTT publisher (sensor simulator)
 ```
-````
 
 ==================================================
 
