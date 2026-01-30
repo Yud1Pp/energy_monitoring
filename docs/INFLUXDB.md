@@ -1,4 +1,4 @@
-````md
+
 # 📘 Dokumentasi Database InfluxDB
 
 Energy Monitoring System – Ravelware
@@ -23,7 +23,7 @@ MQTT_USERNAME=
 MQTT_PASSWORD=
 MQTT_CLIENT_ID=
 ```
-````
+
 
 ==================================================
 
